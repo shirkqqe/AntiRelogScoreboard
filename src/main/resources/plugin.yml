@@ -1,0 +1,15 @@
+name: AntiRelogScoreboard
+version: '${version}'
+main: ru.shirk.antirelogscoreboard.AntiRelogScoreboard
+api-version: '1.16'
+softdepend: [TAB, AntiRelog]
+authors: [shirkqqe]
+website: https://github.com/shirkqqe
+
+commands:
+  antirelogscoreboard:
+    aliases:
+      - arsb
+      - arscoreboard
+      - arboard
+    description: "Usage: /antirelogscoreboard reload"
