@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class Board {
 
@@ -67,11 +66,26 @@ public class Board {
     }
 
     public List<String> buildEnemies(final int time) {
-        if (enemies.isEmpty()) return List.of(" Пусто");
-        final List<String> lines = new ArrayList<>(AntiRelogScoreboard.getConfigurationManager()
-                .getConfig("settings.yml").cl("scoreboard.lines"));
+        if (enemies.isEmpty()) return List.of(AntiRelogScoreboard.getConfigurationManager()
+                .getConfig("settings.yml").c("enemiesFormat.empty"));
+        List<String> lines = new ArrayList<>(new ArrayList<>(AntiRelogScoreboard.getConfigurationManager()
+                .getConfig("settings.yml").cl("scoreboard.lines")).stream().map(
+                line -> line.replace("{seconds}", String.valueOf(time))
+                        .replace("{player}", player.getName())
+                        .replace("{ping}", String.valueOf(player.getPing()))
+        ).toList());
+
+        int enemiesIndex = lines.indexOf("{enemies}");
+        if (enemiesIndex == -1) return lines;
+        final ArrayList<String> enemiesList = getSortedEnemyList();
+        lines.remove(enemiesIndex);
+        lines.addAll(enemiesIndex, enemiesList);
+        return lines;
+    }
+
+    private @NonNull ArrayList<String> getSortedEnemyList() {
         final String[] enemies = this.enemies.toArray(new String[0]);
-        final List<String> enemiesLines = new ArrayList<>();
+        final ArrayList<String> enemiesLines = new ArrayList<>();
         if (this.enemies.size() == 1) {
             for (String enemy : enemies) {
                 final Player p = Bukkit.getPlayer(enemy);
@@ -82,26 +96,33 @@ public class Board {
                         .replace("{health}", String.valueOf((int) p.getHealth()))
                 );
             }
-        } else {
-            for (int i = 0; i < this.enemies.size(); i++) {
-                final Player p = Bukkit.getPlayer(enemies[i]);
-                if (p == null) continue;
-                if (i == this.enemies.size() - 1) {
-                    enemiesLines.add(config.c("enemiesFormat.one")
-                            .replace("{player}", p.getName())
-                            .replace("{ping}", p.getPing() + "")
-                            .replace("{health}", String.valueOf((int) p.getHealth()))
-                    );
-                    continue;
-                }
-                enemiesLines.add(config.c("enemiesFormat.next").replace("{player}", p.getName())
-                        .replace("{ping}", p.getPing() + "").replace("{health}",
-                                String.valueOf((int) p.getHealth())));
-            }
+            return enemiesLines;
         }
-        return lines.stream().map(line -> line.replace("{seconds}", String.valueOf(time))
-                .replace("{enemies}", String.join("\n", enemiesLines))
-                .replace("{player}", player.getName())
-                .replace("{ping}", String.valueOf(player.getPing()))).collect(Collectors.toList());
+        for (int i = 0; i < this.enemies.size(); i++) {
+            final Player p = Bukkit.getPlayer(enemies[i]);
+            if (p == null) continue;
+            if (i == this.enemies.size() - 1) {
+                enemiesLines.add(config.c("enemiesFormat.one")
+                        .replace("{player}", p.getName())
+                        .replace("{ping}", String.valueOf(p.getPing()))
+                        .replace("{health}", String.valueOf((int) p.getHealth()))
+                );
+                continue;
+            }
+            enemiesLines.add(config.c("enemiesFormat.next")
+                    .replace("{player}", p.getName())
+                    .replace("{ping}", String.valueOf(p.getPing()))
+                    .replace("{health}", String.valueOf((int) p.getHealth())));
+        }
+        return enemiesLines;
+    }
+
+    private int getIndexOfEnemiesLines(@NonNull List<String> list) {
+        for (int i = 0; i < list.size(); i++) {
+            final String line = list.get(i);
+            if (line == null || !line.contains("{enemies}")) continue;
+            return i;
+        }
+        return -1;
     }
 }
