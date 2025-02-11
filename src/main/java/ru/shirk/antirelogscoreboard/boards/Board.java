@@ -66,8 +66,6 @@ public class Board {
     }
 
     public List<String> buildEnemies(final int time) {
-        if (enemies.isEmpty()) return List.of(AntiRelogScoreboard.getConfigurationManager()
-                .getConfig("settings.yml").c("enemiesFormat.empty"));
         List<String> lines = new ArrayList<>(new ArrayList<>(AntiRelogScoreboard.getConfigurationManager()
                 .getConfig("settings.yml").cl("scoreboard.lines")).stream().map(
                 line -> line.replace("{seconds}", String.valueOf(time))
@@ -77,6 +75,12 @@ public class Board {
 
         int enemiesIndex = lines.indexOf("{enemies}");
         if (enemiesIndex == -1) return lines;
+        if (enemies.isEmpty()) {
+            lines.remove(enemiesIndex);
+            lines.add(enemiesIndex, AntiRelogScoreboard.getConfigurationManager()
+                    .getConfig("settings.yml").c("enemiesFormat.empty"));
+            return lines;
+        }
         final ArrayList<String> enemiesList = getSortedEnemyList();
         lines.remove(enemiesIndex);
         lines.addAll(enemiesIndex, enemiesList);
