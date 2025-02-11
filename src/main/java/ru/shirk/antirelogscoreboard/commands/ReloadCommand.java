@@ -23,9 +23,6 @@ public class ReloadCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
-        if (args.length == 1) {
-            return List.of("reload");
-        }
-        return List.of();
+        return List.of("reload");
     }
 }

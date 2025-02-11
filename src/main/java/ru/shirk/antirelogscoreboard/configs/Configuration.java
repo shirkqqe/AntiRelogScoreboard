@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused") // from API
 public class Configuration {
 
     private final JavaPlugin p;

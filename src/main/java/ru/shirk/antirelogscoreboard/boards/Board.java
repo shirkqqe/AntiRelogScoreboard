@@ -35,12 +35,11 @@ public class Board {
         this.tabPlayer = TabAPI.getInstance().getPlayer(player.getUniqueId());
     }
 
-    public void showScoreboard(final int time, final String startEnemy) {
+    public void showScoreboard(final int time, @NonNull String startEnemy) {
         if (scoreboardManager.hasCustomScoreboard(tabPlayer)) return;
         enemies.add(startEnemy);
         final Scoreboard scoreboard = scoreboardManager.createScoreboard(
-                player.getName(), AntiRelogScoreboard.getConfigurationManager().getConfig("settings.yml")
-                        .c("scoreboard.title"), buildEnemies(time)
+                player.getName(), config.c("scoreboard.title"), buildEnemies(time)
         );
         scoreboardManager.showScoreboard(tabPlayer, scoreboard);
     }
@@ -66,8 +65,7 @@ public class Board {
     }
 
     public List<String> buildEnemies(final int time) {
-        List<String> lines = new ArrayList<>(new ArrayList<>(AntiRelogScoreboard.getConfigurationManager()
-                .getConfig("settings.yml").cl("scoreboard.lines")).stream().map(
+        List<String> lines = new ArrayList<>(new ArrayList<>(config.cl("scoreboard.lines")).stream().map(
                 line -> line.replace("{seconds}", String.valueOf(time))
                         .replace("{player}", player.getName())
                         .replace("{ping}", String.valueOf(player.getPing()))
@@ -77,8 +75,7 @@ public class Board {
         if (enemiesIndex == -1) return lines;
         if (enemies.isEmpty()) {
             lines.remove(enemiesIndex);
-            lines.add(enemiesIndex, AntiRelogScoreboard.getConfigurationManager()
-                    .getConfig("settings.yml").c("enemiesFormat.empty"));
+            lines.add(enemiesIndex, config.c("enemiesFormat.empty"));
             return lines;
         }
         final ArrayList<String> enemiesList = getSortedEnemyList();

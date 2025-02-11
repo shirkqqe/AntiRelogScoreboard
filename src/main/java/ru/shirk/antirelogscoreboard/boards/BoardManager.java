@@ -1,6 +1,7 @@
 package ru.shirk.antirelogscoreboard.boards;
 
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,18 +18,18 @@ public class BoardManager {
         board.showScoreboard(time, startEnemy);
     }
 
-    public Board getFrom(final Player player) {
+    public @Nullable Board getFrom(final Player player) {
         for (Board board : map.values()) {
-            if (board.getPlayer().equals(player)) {
-                return board;
-            }
+            if (!board.getPlayer().equals(player)) continue;
+            return board;
         }
         return null;
     }
 
     public void reset(final Player player) {
-        if (getFrom(player) == null) return;
-        getFrom(player).resetScoreboard();
+        final Board board = getFrom(player);
+        if (board == null) return;
+        board.resetScoreboard();
         map.remove(player.getUniqueId());
     }
 

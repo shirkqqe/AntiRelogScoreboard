@@ -11,24 +11,24 @@ import java.util.HashMap;
 
 public class ConfigurationManager {
 
-    private final HashMap<String, Configuration> Configs;
+    private final HashMap<String, Configuration> configs;
 
     public ConfigurationManager() {
-        this.Configs = new HashMap<>();
+        this.configs = new HashMap<>();
     }
 
 
     public Configuration getConfig(String name) {
-        if (this.Configs.containsKey(name)) {
-            return this.Configs.get(name);
+        if (this.configs.containsKey(name)) {
+            return this.configs.get(name);
         }
         Configuration config = new Configuration(AntiRelogScoreboard.getInstance(), name);
-        this.Configs.put(name, config);
+        this.configs.put(name, config);
         return config;
     }
 
     public void reloadConfigs() {
-        for (Configuration c : Configs.values()) c.reload();
+        for (Configuration c : configs.values()) c.reload();
     }
 
 
