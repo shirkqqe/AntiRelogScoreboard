@@ -74,8 +74,17 @@ public class Board {
         int enemiesIndex = lines.indexOf("{enemies}");
         if (enemiesIndex == -1) return lines;
         if (enemies.isEmpty()) {
-            lines.remove(enemiesIndex);
-            lines.add(enemiesIndex, config.c("enemiesFormat.empty"));
+            final List<Integer> indexes = config.getFile().getIntegerList("scoreboard.removingLinesIfNoEnemies");
+            if (indexes.isEmpty()) {
+                lines.remove(enemiesIndex);
+                lines.add(enemiesIndex, config.c("enemiesFormat.empty"));
+                return lines;
+            }
+            for (int i = indexes.size() - 1; i >= 0; i--) {
+                int index = indexes.get(i);
+                if (index < 0) continue;
+                lines.remove(index);
+            }
             return lines;
         }
         final ArrayList<String> enemiesList = getSortedEnemyList();
