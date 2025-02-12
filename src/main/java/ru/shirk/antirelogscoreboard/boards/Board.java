@@ -126,13 +126,4 @@ public class Board {
         }
         return enemiesLines;
     }
-
-    private int getIndexOfEnemiesLines(@NonNull List<String> list) {
-        for (int i = 0; i < list.size(); i++) {
-            final String line = list.get(i);
-            if (line == null || !line.contains("{enemies}")) continue;
-            return i;
-        }
-        return -1;
-    }
 }
