@@ -11,28 +11,22 @@ import org.bukkit.entity.Player;
 import ru.shirk.antirelogscoreboard.AntiRelogScoreboard;
 import ru.shirk.antirelogscoreboard.configs.Configuration;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Board {
 
     @Getter
-    private final Player player;
-    private final TabPlayer tabPlayer;
-    private final ScoreboardManager scoreboardManager;
-    private final Configuration config = AntiRelogScoreboard.getConfigurationManager().getConfig("settings.yml");
-    @Getter
-    private final Set<String> enemies = new HashSet<>();
+    private final @NonNull Player player;
+    private final @NonNull TabPlayer tabPlayer;
+    private final @NonNull ScoreboardManager scoreboardManager;
+    private final @NonNull Configuration config = AntiRelogScoreboard.getConfigurationManager().getConfig("settings.yml");
+    private final @NonNull HashSet<String> enemies = new HashSet<>();
 
-    public Board(final Player player) {
-        this.scoreboardManager = TabAPI.getInstance().getScoreboardManager();
-        if (scoreboardManager == null) {
-            throw new IllegalStateException("Enable Scoreboards in TAB plugin.");
-        }
+    public Board(@NonNull Player player) {
+        this.scoreboardManager = Objects.requireNonNull(TabAPI.getInstance().getScoreboardManager());
         this.player = player;
-        this.tabPlayer = TabAPI.getInstance().getPlayer(player.getUniqueId());
+        this.tabPlayer = Objects.requireNonNull(TabAPI.getInstance().getPlayer(player.getUniqueId()));
     }
 
     public void showScoreboard(final int time, @NonNull String startEnemy) {
@@ -44,86 +38,72 @@ public class Board {
         scoreboardManager.showScoreboard(tabPlayer, scoreboard);
     }
 
-    public void updateScoreboard(final int time) {
+    public void updateScoreboard(int time) {
         final Scoreboard scoreboard = scoreboardManager.createScoreboard(
-                player.getName(), AntiRelogScoreboard.getConfigurationManager().getConfig("settings.yml")
-                        .c("scoreboard.title"), buildEnemies(time)
+                player.getName(),
+                config.c("scoreboard.title"),
+                buildEnemies(time)
         );
-        scoreboardManager.showScoreboard(tabPlayer, scoreboard);
+        try {
+            scoreboardManager.showScoreboard(tabPlayer, scoreboard);
+        } catch (Exception ignored) {}
     }
 
     public void resetScoreboard() {
-        scoreboardManager.resetScoreboard(tabPlayer);
+        Bukkit.getScheduler().runTaskLater(AntiRelogScoreboard.getInstance(),
+                () -> scoreboardManager.resetScoreboard(tabPlayer), 10L);
     }
 
-    public void add(@NonNull String name) {
+    public void addEnemy(@NonNull String name) {
         enemies.add(name);
     }
 
-    public void remove(@NonNull String name) {
+    public void removeEnemy(@NonNull String name) {
         enemies.remove(name);
     }
 
-    public List<String> buildEnemies(final int time) {
-        List<String> lines = new ArrayList<>(new ArrayList<>(config.cl("scoreboard.lines")).stream().map(
-                line -> line.replace("{seconds}", String.valueOf(time))
+    public @NonNull List<String> buildEnemies(final int time) {
+        List<String> lines = config.cl("scoreboard.lines").stream()
+                .map(line -> line.replace("{seconds}", String.valueOf(time))
                         .replace("{player}", player.getName())
-                        .replace("{ping}", String.valueOf(player.getPing()))
-        ).toList());
+                        .replace("{ping}", String.valueOf(player.getPing())))
+                .collect(Collectors.toCollection(ArrayList::new));
 
         int enemiesIndex = lines.indexOf("{enemies}");
         if (enemiesIndex == -1) return lines;
+
         if (enemies.isEmpty()) {
-            final List<Integer> indexes = config.getFile().getIntegerList("scoreboard.removingLinesIfNoEnemies");
+            List<Integer> indexes = config.getFile().getIntegerList("scoreboard.removingLinesIfNoEnemies");
             if (indexes.isEmpty()) {
-                lines.remove(enemiesIndex);
-                lines.add(enemiesIndex, config.c("enemiesFormat.empty"));
+                lines.set(enemiesIndex, config.c("enemiesFormat.empty"));
                 return lines;
             }
-            for (int i = indexes.size() - 1; i >= 0; i--) {
-                int index = indexes.get(i);
-                if (index < 0) continue;
-                lines.remove(index);
-            }
+            indexes.stream().filter(index -> index >= 0).sorted(Collections.reverseOrder()).forEach(lines::remove);
             return lines;
         }
-        final ArrayList<String> enemiesList = getSortedEnemyList();
+
+        final List<String> enemiesList = getSortedEnemyList();
         lines.remove(enemiesIndex);
         lines.addAll(enemiesIndex, enemiesList);
         return lines;
     }
 
-    private @NonNull ArrayList<String> getSortedEnemyList() {
+    private @NonNull List<String> getSortedEnemyList() {
         final String[] enemies = this.enemies.toArray(new String[0]);
-        final ArrayList<String> enemiesLines = new ArrayList<>();
-        if (this.enemies.size() == 1) {
-            for (String enemy : enemies) {
-                final Player p = Bukkit.getPlayer(enemy);
-                if (p == null) continue;
-                enemiesLines.add(config.c("enemiesFormat.one")
-                        .replace("{player}", p.getName())
-                        .replace("{ping}", p.getPing() + "")
-                        .replace("{health}", String.valueOf((int) p.getHealth()))
-                );
-            }
-            return enemiesLines;
-        }
-        for (int i = 0; i < this.enemies.size(); i++) {
-            final Player p = Bukkit.getPlayer(enemies[i]);
+        final List<String> enemiesLines = new ArrayList<>(enemies.length);
+        final String oneFormat = config.c("enemiesFormat.one");
+        final String nextFormat = config.c("enemiesFormat.next");
+
+        for (int i = 0; i < enemies.length; i++) {
+            if (enemies[i] == null) continue;
+            Player p = Bukkit.getPlayer(enemies[i]);
             if (p == null) continue;
-            if (i == this.enemies.size() - 1) {
-                enemiesLines.add(config.c("enemiesFormat.one")
-                        .replace("{player}", p.getName())
-                        .replace("{ping}", String.valueOf(p.getPing()))
-                        .replace("{health}", String.valueOf((int) p.getHealth()))
-                );
-                continue;
-            }
-            enemiesLines.add(config.c("enemiesFormat.next")
+            enemiesLines.add(((enemies.length == 1 || i == enemies.length - 1) ? oneFormat : nextFormat)
                     .replace("{player}", p.getName())
                     .replace("{ping}", String.valueOf(p.getPing()))
                     .replace("{health}", String.valueOf((int) p.getHealth())));
         }
+
         return enemiesLines;
     }
 }

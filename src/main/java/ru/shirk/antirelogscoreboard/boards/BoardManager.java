@@ -1,15 +1,14 @@
 package ru.shirk.antirelogscoreboard.boards;
 
+import lombok.NonNull;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class BoardManager {
 
-    private final Map<UUID, Board> map = new HashMap<>();
+    private final @NonNull BoardsContainer<UUID, Board> map = new BoardsContainer<>();
 
     public void show(final Player player, final String startEnemy, final int time) {
         if (map.containsKey(player.getUniqueId()) || player.hasPermission("antirelog.bypass")) return;
@@ -19,7 +18,9 @@ public class BoardManager {
     }
 
     public @Nullable Board getFrom(final Player player) {
-        for (Board board : map.values()) {
+        final Collection<Board> boards = map.cloneValues();
+        for (Board board : boards) {
+            if (board == null) continue;
             if (!board.getPlayer().equals(player)) continue;
             return board;
         }
@@ -34,13 +35,21 @@ public class BoardManager {
     }
 
     public void removeAll(final String name) {
-        for (Board board : map.values()) {
-            board.remove(name);
+        final Collection<Board> boards = map.cloneValues();
+        for (Board board : boards) {
+            if (board == null) continue;
+            board.removeEnemy(name);
+            try {
+                map.replace(board.getPlayer().getUniqueId(), board);
+            } catch (Exception ignored) {
+            }
         }
     }
 
     public void resetAll() {
-        for (Board board : map.values()) {
+        final Collection<Board> boards = map.cloneValues();
+        for (Board board : boards) {
+            if (board == null) continue;
             board.resetScoreboard();
             map.remove(board.getPlayer().getUniqueId());
         }

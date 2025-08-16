@@ -1,6 +1,7 @@
 package ru.shirk.antirelogscoreboard;
 
 import lombok.Getter;
+import lombok.NonNull;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.shirk.antirelogscoreboard.boards.BoardManager;
 import ru.shirk.antirelogscoreboard.commands.ReloadCommand;
@@ -15,9 +16,9 @@ public final class AntiRelogScoreboard extends JavaPlugin {
     @Getter
     private static AntiRelogScoreboard instance;
     @Getter
-    private static final BoardManager boardManager = new BoardManager();
+    private final @NonNull BoardManager boardManager = new BoardManager();
     @Getter
-    private static final ConfigurationManager configurationManager = new ConfigurationManager();
+    private static final @NonNull ConfigurationManager configurationManager = new ConfigurationManager();
 
     @Override
     public void onEnable() {
@@ -32,13 +33,12 @@ public final class AntiRelogScoreboard extends JavaPlugin {
         loadConfigs();
         Objects.requireNonNull(this.getCommand("antirelogscoreboard")).setExecutor(new ReloadCommand());
         Objects.requireNonNull(this.getCommand("antirelogscoreboard")).setTabCompleter(new ReloadCommand());
-        this.getServer().getPluginManager().registerEvents(new Events(), this);
+        this.getServer().getPluginManager().registerEvents(new Events(this), this);
     }
 
     @Override
     public void onDisable() {
         boardManager.resetAll();
-        instance = null;
     }
 
     private void loadConfigs() {

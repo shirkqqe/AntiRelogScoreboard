@@ -14,7 +14,7 @@ import java.util.List;
 public class ReloadCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
-        if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+        if (args.length > 0 && args[0].equalsIgnoreCase("reload") && sender.hasPermission("antirelogscoreboard.admin")) {
             AntiRelogScoreboard.getConfigurationManager().reloadConfigs();
             sender.sendMessage(ChatColor.GREEN + "Конфиги успешно перезагружены!");
         }
